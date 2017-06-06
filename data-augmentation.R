@@ -8,9 +8,9 @@ rm(list=ls())
 #-------------------------------------------------------------------------------
 
 # Set run parameters parameters
-train_img_1_path <- "./Type_1/"
-train_img_2_path <- "./Type_2/"
-train_img_3_path <- "./Type_3/"
+train_img_1_path <- "./Type_1"
+train_img_2_path <- "./Type_2"
+train_img_3_path <- "./Type_3"
 
 
 #-------------------------------------------------------------------------------
@@ -22,9 +22,9 @@ library(EBImage)
 
 # Load images into a dataframe
 library(gsubfn)
-img_file_1_list <- list.files(path = train_img_1_path, pattern = "*.png", full.names = TRUE, recursive = TRUE)
-img_file_2_list <- list.files(path = train_img_2_path, pattern = "*.png", full.names = TRUE, recursive = TRUE)
-img_file_3_list <- list.files(path = train_img_3_path, pattern = "*.png", full.names = TRUE, recursive = TRUE)
+img_file_1_list <- list.files(path = train_img_1_path, pattern = "*.jpg", full.names = TRUE, recursive = TRUE)
+img_file_2_list <- list.files(path = train_img_2_path, pattern = "*.jpg", full.names = TRUE, recursive = TRUE)
+img_file_3_list <- list.files(path = train_img_3_path, pattern = "*.jpg", full.names = TRUE, recursive = TRUE)
 
 
 #train_df <- data.frame()
