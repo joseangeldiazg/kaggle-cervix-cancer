@@ -14,14 +14,23 @@ Este problema, es de un nivel avanzado, y a lo largo de los siguientes capítulos
 \section{Problema y Dataset}
 \label{dataset}
 
-El problema en última instancia es un problema de clasificación multiclase real el cual deberá ser resuelto mediante técnicas de \textit{deeplearning}. El problema, en concreto es Intel & MobileODT Cervical Cancer Screening \cite{challenge} y trata de clasificar partiendo de imágenes del cervix de distintas pacientes, que tipo de tratamiento para el cancer es más efectivo. 
+El problema en última instancia es un problema de clasificación multiclase real el cual deberá ser resuelto mediante técnicas de \textit{deeplearning}. El problema, en concreto es Intel \& MobileODT Cervical Cancer Screening \cite{challenge} y trata de clasificar partiendo de imágenes del cervix de distintas pacientes, que tipo de tratamiento para el cancer es más efectivo, aspecto muy relevante sobre todo en puntos del mundo rural donde el acceso a grandes infraestructuras médicas puede estar limitado y donde la prevención en etapas tempranas puede ser decisiva.  
 
+El dataset está compuesto de la siguiente manera:
+
+	\begin{itemize}
+		\item \textbf{test}: 512 Imágenes que deberemos clasificar tras el entrenamiento. 
+		\item \textbf{train}: Tenemos un total de 1581 muestras para entrenar, compuestas por 350 de tipo 1, 781 de tipo 2 y 450 de tipo 3. 
+		\item \textbf{train-extra}: El dataset ofrece también una gran conjunto de imégenes extra para el entrenamiento de unos 30GB de espacio en disco. 
+	\end{itemize}
+
+Podemos ver como el dataset muestra cierto ratio de des balanceo, por lo que en instancias superiores de la práctica, deberemos atacar este punto para obtener mejores resultados. Por otro lado, las restricciones del problema hacen que sean interesantes propuestas como \textit{One Vs One} o \textit{One vs All} que analizáremos en sucesivos puntos. 
 
 \section{Herramientas y objetivos}
 
 En esta sección veremos una breve introducción a las herramientas usadas para el desarrollo de la práctica así como de los principales objetivos que se buscan conseguir con el desarrollo de la misma. 
 
-\subsection{Hardware}ls
+\subsection{Hardware}
 
 \begin{table}[H]
 	\begin{center}
@@ -53,7 +62,7 @@ En esta sección veremos una breve introducción a las herramientas usadas para el
 
 \subsection{Software}
 
-El software utilizado es en su práctica totalidad software libre, siendo el restante software propietario cuyas licencias vienen incluidas en el sistema operativo de la máquina usada siendo este OS X "Sierra". El software usado es:
+El software utilizado es en su práctica totalidad software libre, siendo el restante software propietario cuyas licencias vienen incluidas en el sistema operativo de la máquina \ref{ord_personal1} siendo este OS X "Sierra", o el Windows 10 de la máquina \ref{ord_personal2}. El software usado es:
 
 \begin{itemize}
 	\item \textbf{RStudio}\cite{rstudio}: Entorno de trabajo para R.
