@@ -1,0 +1,78 @@
+%---------------------------------------------------
+% Nombre: capitulo1.tex  
+% 
+% Texto del capitulo 1
+%---------------------------------------------------
+
+\chapter{Introducción}
+
+Esta última práctica está enmarcada dentro de la asignatura \textbf{Sistemas Inteligentes para La Gestión en la Empresa} del Master Profesional en Ingeniería Informática de la UGR  y aborda un problema real de predicción multiclase en la plataforma Kaggle \cite{kaggle}. 
+
+Este problema, es de un nivel avanzado, y a lo largo de los siguientes capítulos intentaremos aportar una solución aceptable en la plataforma Kaggle, así como estudiar y asentar los diferentes conceptos teóricos vistos en la asignatura. 
+
+
+\section{Problema y Dataset}
+\label{dataset}
+
+El problema en última instancia es un problema de clasificación multiclase real el cual deberá ser resuelto mediante técnicas de \textit{deeplearning}. El problema, en concreto es Intel & MobileODT Cervical Cancer Screening \cite{challenge} y trata de clasificar partiendo de imágenes del cervix de distintas pacientes, que tipo de tratamiento para el cancer es más efectivo. 
+
+
+\section{Herramientas y objetivos}
+
+En esta sección veremos una breve introducción a las herramientas usadas para el desarrollo de la práctica así como de los principales objetivos que se buscan conseguir con el desarrollo de la misma. 
+
+\subsection{Hardware}ls
+
+\begin{table}[H]
+	\begin{center}
+		\begin{tabular}{cc} \toprule
+		Elemento & Características \\ \midrule
+		Procesador & 2,6 GHz Intel Core i5 \\
+		GPU & - \\
+		Memoria Ram &  8 GB 1600 MHz DDR3 \\
+		Disco duro & SATA SSD de 120 GB\\ \bottomrule
+		\end{tabular}
+	\end{center}
+\caption{Especificaciones técnicas de la máquina 1.}
+\label{ord_personal1}
+\end{table}
+
+\begin{table}[H]
+	\begin{center}
+		\begin{tabular}{cc} \toprule
+		Elemento & Características \\ \midrule
+		Procesador & 2,6 GHz Intel Core i5 \\
+		GPU & 2,6 GHz Intel Core i5 \\
+		Memoria Ram &  8 GB 1600 MHz DDR3 \\
+		Disco duro & SATA SSD de 120 GB\\ \bottomrule
+		\end{tabular}
+	\end{center}
+\caption{Especificaciones técnicas de la máquina 2.}
+\label{ord_personal2}
+\end{table}
+
+\subsection{Software}
+
+El software utilizado es en su práctica totalidad software libre, siendo el restante software propietario cuyas licencias vienen incluidas en el sistema operativo de la máquina usada siendo este OS X "Sierra". El software usado es:
+
+\begin{itemize}
+	\item \textbf{RStudio}\cite{rstudio}: Entorno de trabajo para R.
+	\item \textbf{TeXShop}, procesador de textos basado en \textit{Latex} usado para elaborar la documentación del presente proyecto.
+\end{itemize}
+
+\subsection{Objetivos}
+
+Los objetivos de este trabajo podrían resumirse en los siguientes:
+
+\begin{itemize}
+	\item Obtener un modelo predictivo binario fiable que dado un nuevo pasajero X con sus características dadas,  sea capaz de predecir si habría sobrevivido o no al desastre del Titanic. 
+	\item Aumentar el accuracy de nuestro sistema de manera que podamos subir posiciones en la competición relativa en Kaggle \cite{kaggle}. 
+	\item Comprender y estudiar las distintas técnicas de minería de datos vistas en la asignatura. 
+\end{itemize}
+
+\section{Organización del trabajo} 
+
+La organización del presente documento, se centra en detallar cada uno de los pasos seguidos durante el estudio y resolución del problema planteado en esta introducción. En primera instancia, encontramos en el capítulo \ref{1} un estudio explorativo y estadístico del dataset, continuaremos con modelos simples basados en reglas y en predicciones realizadas a simple vista con el conocimiento extraido de la exploración para continuar con modelos avanzados de clasificación en el capítulo \ref{clasificacion} y finalizar con vías futuras y una tabla resumen con los resultados del proceso experimental en el anexo \ref{anexo}.
+
+\clearpage
+%---------------------------------------------------
