@@ -21,10 +21,16 @@ El dataset está compuesto de la siguiente manera:
 	\begin{itemize}
 		\item \textbf{test}: 512 Imágenes que deberemos clasificar tras el entrenamiento. 
 		\item \textbf{train}: Tenemos un total de 1581 muestras para entrenar, compuestas por 350 de tipo 1, 781 de tipo 2 y 450 de tipo 3. 
-		\item \textbf{train-extra}: El dataset ofrece también una gran conjunto de imégenes extra para el entrenamiento de unos 30GB de espacio en disco. 
+		\item \textbf{train-extra}: El dataset ofrece también una gran conjunto de imagenes extra para el entrenamiento de unos 30GB de espacio en disco. 
 	\end{itemize}
 
 Podemos ver como el dataset muestra cierto ratio de des balanceo, por lo que en instancias superiores de la práctica, deberemos atacar este punto para obtener mejores resultados. Por otro lado, las restricciones del problema hacen que sean interesantes propuestas como \textit{One Vs One} o \textit{One vs All} que analizáremos en sucesivos puntos. 
+
+
+\subsection{Evaluación}
+
+La evaluación de está práctica tendrá como evaluador del modelo la función \textit{logloss}, donde los falsos negativos tendrán una gran penalización. En caso de obtener una evaluación perfecta, el \textit{logloss} del clasificador sería \textbf{0}.
+
 
 \section{Herramientas y objetivos}
 
@@ -50,10 +56,10 @@ En esta sección veremos una breve introducción a las herramientas usadas para el
 	\begin{center}
 		\begin{tabular}{cc} \toprule
 		Elemento & Características \\ \midrule
-		Procesador & 2,6 GHz Intel Core i5 \\
+		Procesador & Intel Core i7 6700HQ \\
 		GPU & 2,6 GHz Intel Core i5 \\
-		Memoria Ram &  8 GB 1600 MHz DDR3 \\
-		Disco duro & SATA SSD de 120 GB\\ \bottomrule
+		Memoria Ram &  16 GB SDRAM  \\
+		Disco duro & 128GB SSD\\ \bottomrule
 		\end{tabular}
 	\end{center}
 \caption{Especificaciones técnicas de la máquina 2.}
@@ -65,8 +71,12 @@ En esta sección veremos una breve introducción a las herramientas usadas para el
 El software utilizado es en su práctica totalidad software libre, siendo el restante software propietario cuyas licencias vienen incluidas en el sistema operativo de la máquina \ref{ord_personal1} siendo este OS X "Sierra", o el Windows 10 de la máquina \ref{ord_personal2}. El software usado es:
 
 \begin{itemize}
-	\item \textbf{RStudio}\cite{rstudio}: Entorno de trabajo para R.
-	\item \textbf{TeXShop}, procesador de textos basado en \textit{Latex} usado para elaborar la documentación del presente proyecto.
+	\item \textbf{RStudio}: Entorno de trabajo para R.
+	\item \textbf{Tensorflow}: Entorno de deeplearning sobre Python. 
+	\item \textbf{Keras}: Capa de abstracción sobre Tensorflow. 
+	\item \textbf{MXNet}: Libreria de Deeplearning sobre R.  
+	\item \textbf{Atom}: Editor de texto plano para la programación de los scripts. 
+	\item \textbf{TeXShop}: procesador de textos basado en \textit{Latex} usado para elaborar la documentación del presente proyecto.
 \end{itemize}
 
 \subsection{Objetivos}
@@ -74,14 +84,19 @@ El software utilizado es en su práctica totalidad software libre, siendo el rest
 Los objetivos de este trabajo podrían resumirse en los siguientes:
 
 \begin{itemize}
-	\item Obtener un modelo predictivo binario fiable que dado un nuevo pasajero X con sus características dadas,  sea capaz de predecir si habría sobrevivido o no al desastre del Titanic. 
-	\item Aumentar el accuracy de nuestro sistema de manera que podamos subir posiciones en la competición relativa en Kaggle \cite{kaggle}. 
-	\item Comprender y estudiar las distintas técnicas de minería de datos vistas en la asignatura. 
+	\item Obtener un modelo predictivo fiable que dado una nueva imagen pueda predecir el tipo de tratamiento contra el cancer a aplicar. 
+	\item Obtener un valor de \textit{LogLoss} aceptable para escalar posiciones en la competición de Kaggle. 
+	\item Comprender y estudiar las distintas técnicas de minería de datos vistas en la asignatura.
+	\item Ahondar en el proceso de la multiclasificación y las vertientes de estudio dentro de la misma. 
+	\item Estudiar distintos métodos de clasificación sobre el mapa de características proveniente del entrenamiento de las redes neuronales.   
 \end{itemize}
 
 \section{Organización del trabajo} 
 
-La organización del presente documento, se centra en detallar cada uno de los pasos seguidos durante el estudio y resolución del problema planteado en esta introducción. En primera instancia, encontramos en el capítulo \ref{1} un estudio explorativo y estadístico del dataset, continuaremos con modelos simples basados en reglas y en predicciones realizadas a simple vista con el conocimiento extraido de la exploración para continuar con modelos avanzados de clasificación en el capítulo \ref{clasificacion} y finalizar con vías futuras y una tabla resumen con los resultados del proceso experimental en el anexo \ref{anexo}.
+La organización del presente documento, se centra en detallar cada uno de los pasos seguidos durante el estudio y resolución del problema planteado en esta introducción. En el capítulo \ref{preprocesado} veremos los scripts y explicaciones asociadas al preprocesado de datos, más concretamente al data augmentation y cierto enfoque de \textit{imbalance learning}. En el capitulo \ref{nn} tendremos el grueso del trabajo en el que entraremos en detalle en una primera aproximación \textit{from scracth} con \textit{mxnet}  y el grueso del trabajo realizando \textit{fine tunning} en Tensorflow.  Finalizaremos con el capítulo \ref{multi} dedicado al estudio de multiclasificación y uso de otros clasificadores y por último las conclusiones y vías futuras que quedan relegadas al capítulo \ref{conclusiones}. 
+
+Los resultados obtenidos en la competición de kaggle pueden encontrarse en el Anexo de la seccion \ref{anexo}.
+
 
 \clearpage
 %---------------------------------------------------
