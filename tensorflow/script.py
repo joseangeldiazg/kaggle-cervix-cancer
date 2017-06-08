@@ -135,8 +135,7 @@ def main():
     #np.save('test_id.npy', test_id, allow_pickle=True, fix_imports=True)
     #test_id = np.load('test_id.npy')
     pred = grid_result.predict_proba(test_data)
-    print(le_classess_)
-    df = pd.DataFrame(pred, columns=l['Type_1','Type_2','Type_3'])
+    df = pd.DataFrame(pred, columns=['Type_1','Type_2','Type_3'])
     df['image_name'] = test_id
     df.to_csv('submission 05-05 01.csv', index=False)
 
