@@ -157,7 +157,7 @@ set_train_unbalanced <- ordered_images_all[ordered_images_all$paciente %in% setd
 set.seed(9)
 undersample_1_set_train <- set_train_unbalanced %>% 
   group_by(Type) %>% 
-  sample_n(225) %>% 
+  #sample_n(225) %>% 
   ungroup() %>% 
   sample_frac(1) %>%  
   sample_frac(1) #WE SHUFFLE TWICE

@@ -93,7 +93,7 @@ def normalize_image_features(paths):
 
 def create_model(opt_='adamax'):
     model = Sequential()
-    model.add(Convolution2D(4, 3, 3, activation='relu', dim_ordering='th', input_shape=(3, 32, 32))) #use input_shape=(3, 64, 64)
+    model.add(Convolution2D(4, 3, 3, activation='relu', dim_ordering='th', input_shape=(3, 64, 64))) #use input_shape=(3, 64, 64)
     model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))
     model.add(Convolution2D(8, 3, 3, activation='relu', dim_ordering='th'))
     model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))

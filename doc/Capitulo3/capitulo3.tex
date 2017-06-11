@@ -7,13 +7,531 @@
 \chapter{Clasificación con NN}
 \label{nn}
 
+En este capitulo veremos el proceso seguido y las distintas vertientes de entrenamiento usadas a lo largo de la realización de la práctica. Concretamente veremos entrenamiento \textit{from scratch} con dos tecnologías distintas y por último \textit{fine tunning}. 
+
+
+\section{Intel Deeplearning SDK}
+
+Como el software se ve en la práctica y en virtud de probar todos y cada uno de los elementos estudiados, instalamos el software de Intel en la máquina \ref{ord_personal1}. El primero de los problemas vino con el tiempo de instalación y la cantidad de memoria necesaria por este, por un lado para desplegar los 4 contenedores docker que montan la app, como para alojar los dataset, ya que crea una copia dentro de los contenedores de los mismos. Por otro lado, una vez instalado, constatamos la imposibilidad de validar el conjunto de test de la competición sin realizar modificaciones en los scripts de Caffe o Tensorflow o creando clases ficticias para que clasifique con las cuales el proceso de entrenamiento ofrecería resultados muy malos y la interfaz gráfica del mismo serviría mas bien de poco. La cantidad de problemas y la perdida de tiempo con el software, hizo que migráramos directamente hacia otras tecnologías como las que veremos a continuación. 
+
 \section{From Scratch}
+
+La estrategia seguida en una competición en la que el tiempo de computo era un factor claramente privativo, ha pasado por afinar el proceso de preprocesado de datos con scripts que ofrecían resultados 'aceptables` en poco tiempo de computo. Por ello, nos hemos basado en redes neuronales muy sencillas, sobre las cuales podríamos ir probando distintas combinaciones de preprocesado, como las vistas en el capítulo \ref{preprocesado} y ver cuales son las que mejor se adaptan a nuestro problema, con la premisa de si funcionan bien en una red sencilla también lo harán en redes mas complejas. Las redes elaboradas provienen de kernels de Kaggle, concretamente la de MXNET proviene del siguiente tutorial \cite{tutorial1}  y la de TensorFlow de este otro \cite{tutorial2}, aunque si bien el código ha sido modificado para adaptarlo a nuestros requisitos. 
+
+\subsection{Mxnet}
+
+
+
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+          #-------------------------------------------------------------------------------
+  # Kaggle Intel Cervix Cancer Challenge
+  #
+  #
+  # Image loading and basic pre-processing with EBImage
+  # Color images
+  # Submission to Kaggle is generated
+  #-------------------------------------------------------------------------------
+
+
+  #-------------------------------------------------------------------------------
+  #Load librarys
+  #-------------------------------------------------------------------------------
+
+
+  library(dplyr)
+  library(EBImage)
+  library(mxnet)
+  library(nnet)
+
+
+  #-------------------------------------------------------------------------------
+  # Load images using EBImage
+  #
+  # This loop resize all images, we dont have to do data-augmentation 
+  # because, it is done with the script data-augmentation.R. 
+  #-------------------------------------------------------------------------------
+
+
+  paths <- c("/Users/joseadiazg/Desktop/Temporales UGR/SIGE/all_data_resized/Type_1",
+             "/Users/joseadiazg/Desktop/Temporales UGR/SIGE/all_data_resized/Type_2",
+             "/Users/joseadiazg/Desktop/Temporales UGR/SIGE/all_data_resized/Type_3")
+
+
+  # Uncomment this if you want to load all training + extra images
+
+
+  #-------------------------------------------------------------------------------
+  #paths <- c("/Users/joseadiazg/Desktop/Temporales UGR/SIGE/all_data_resized/Type_1",
+  #           "/Users/joseadiazg/Desktop/Temporales UGR/SIGE/all_data_resized/Type_2",
+  #           "/Users/joseadiazg/Desktop/Temporales UGR/SIGE/all_data_resized/Type_3",
+  #            "/Users/joseadiazg/Desktop/Temporales UGR/SIGE/train-extra-unidas/Type_1",
+  #            "/Users/joseadiazg/Desktop/Temporales UGR/SIGE/train-extra-unidas/Type_2",
+  #            "/Users/joseadiazg/Desktop/Temporales UGR/SIGE/train-extra-unidas/Type_3",
+  #            )
+  #-------------------------------------------------------------------------------
+
+  in_type_counter <- 1 
+
+  for (t in  paths){
+    
+    patients <- dir(t)
+    
+    #For this simple example We rescale photos to 128*128 (= 16384)
+
+    
+    n_columnas <- 1 + 1 + 49152
+    
+    
+    ordered_images <- data.frame(matrix(nrow = length(patients), ncol = n_columnas))
+    colnames(ordered_images) <- c("paciente", "Type", paste("R", (1:16384), sep = ""), paste("G", (1:16384), sep = ""), paste("B", (1:16384), sep = ""))
+    
+    contador <- 1
+    
+    if(in_type_counter == 1){
+      ordered_images$Type <- 1 #(*) ojo , asignación manual segun el folder que esté procesando
+    }
+    
+    if(in_type_counter == 2){
+      ordered_images$Type <- 2 #(*) ojo , asignación manual segun el folder que esté procesando
+    }
+    
+    if(in_type_counter == 3){
+      ordered_images$Type <- 3 #(*) ojo , asignación manual segun el folder que esté procesando
+    }
+    
+    #+++
+    mom_inicio <- Sys.time()
+    print("beginning calculation: ")
+    print(mom_inicio)
+    #+++
+    
+    for (p in patients){
+      
+      cat("contador:", contador, " paciente:", p, "\n")
+      
+      ordered_images$paciente[contador] <- p
+      
+      imagen_paciente <- readImage(paste(t, p, sep = "/"))   #abre imagen de cada paciente...
+      
+      #TODO: We have to change this resize to a new version in witch we use the same
+      # proportion of tam but smaller. 
+      
+      imagen_paciente <- resize(imagen_paciente, w = 128, h = 128)
+      
+      
+      ordered_images[contador,  c(3:16386)] <- imagen_paciente[, , 1]
+      ordered_images[contador,  c(16387:32770)] <- imagen_paciente[, , 2]
+      ordered_images[contador,  c(32771:49154)] <- imagen_paciente[, , 3]
+      
+      contador <- contador + 1 
+      
+    }
+    
+    
+    #+++
+    print("calculation time: ")
+    print(Sys.time() - mom_inicio)
+    #+++
+    
+    
+    if(in_type_counter == 1){
+      ordered_images_Type_1 <- ordered_images
+    }
+    
+    if(in_type_counter == 2){
+      ordered_images_Type_2 <- ordered_images
+    }
+    
+    if(in_type_counter == 3){
+      ordered_images_Type_3 <- ordered_images
+    }
+    
+    
+    in_type_counter <-  in_type_counter + 1 
+  }
+
+
+  ordered_images_all <- bind_rows(ordered_images_Type_1, ordered_images_Type_2, ordered_images_Type_3)
+    
+
+  #-------------------------------------------------------------------------------
+  # Subset for validation
+  #-------------------------------------------------------------------------------
+
+  table(ordered_images_all$Type)
+
+
+  ordered_images_all$Type <- ordered_images_all$Type - 1  
+
+
+  set.seed(9)
+  set_validacion <- ordered_images_all %>% 
+    group_by(Type) %>% 
+    sample_n(25) %>% 
+    ungroup()
+
+
+  #-------------------------------------------------------------------------------
+  # Undersampling
+  #-------------------------------------------------------------------------------
+
+
+  set_train_unbalanced <- ordered_images_all[ordered_images_all$paciente %in% setdiff(ordered_images_all$paciente, set_validacion$paciente), ]
+
+  #primera muestra train undersampled:
+  set.seed(9)
+  undersample_1_set_train <- set_train_unbalanced %>% 
+    group_by(Type) %>% 
+    #sample_n(225) %>% 
+    ungroup() %>% 
+    sample_frac(1) %>%  
+    sample_frac(1) #WE SHUFFLE TWICE
+
+  # dim(undersample_1_set_train)
+  # #[1]   675 12290
+  # dim(set_validacion)
+  # #[1]    75 12288
+
+
+  #_____train and  validación labels___________________________
+  target_undersample_1 <- undersample_1_set_train$Type
+  label_set_validacion <- set_validacion$Type
+  #____________________________________________________________
+
+
+  #_____train set1(undersampled) y and validation set, both balanced_______
+  undersample_1_set_train <-undersample_1_set_train[, c(3:49154)]
+  set_validacion <-set_validacion[, c(3:49154)]
+  #_____target y label de validación_________________________________________
+
+  undersample_1_set_train <- t(undersample_1_set_train)
+  dim(undersample_1_set_train) <- c(128, 128, 3, 675)
+
+
+  set_validacion <- t(set_validacion)
+  dim(set_validacion) <- c(128, 128, 3, 75)
+
+
+
+
+  #-------------------------------------------------------------------------------
+  # Tunning parametters for the nn
+  #-------------------------------------------------------------------------------
+
+
+  n_output <- 3
+  num_filters_conv2 = 14
+  num.round = 10
+  learning.rate = 0.1	
+  momentum = 0.0056
+  weight_decay = 0.0046	
+  initializer = 0.0667	
+
+
+  # AND SOME HELPER FUNCTIONS:
+  mLogLoss.normalize = function(p, min_eta=1e-15, max_eta = 1.0){
+    #min_eta
+    for(ix in 1:dim(p)[2]) {
+      p[,ix] = ifelse(p[,ix]<=min_eta,min_eta,p[,ix]);
+      p[,ix] = ifelse(p[,ix]>=max_eta,max_eta,p[,ix]);
+    }
+    #normalize
+    for(ix in 1:dim(p)[1]) {
+      p[ix,] = p[ix,] / sum(p[ix,]);
+    }
+    return(p);
+  }
+
+  # helper function
+  #calculates logloss
+  mlogloss = function(y, p, min_eta=1e-15,max_eta = 1.0){
+    class_loss = c(dim(p)[2]);
+    loss = 0;
+    p = mLogLoss.normalize(p,min_eta, max_eta);
+    for(ix in 1:dim(y)[2]) {
+      p[,ix] = ifelse(p[,ix]>1,1,p[,ix]);
+      class_loss[ix] = sum(y[,ix]*log(p[,ix]));
+      loss = loss + class_loss[ix];
+    }
+    #return loss
+    return (list("loss"=-1*loss/dim(p)[1],"class_loss"=class_loss));
+  }
+
+  # mxnet specific logloss metric
+  mx.metric.mlogloss <- mx.metric.custom("mlogloss", function(label, pred){
+    p = t(pred);
+    m = mlogloss(class.ind(label),p);
+    gc();
+    return(m$loss);
+  })
+    
+
+
+  #-------------------------------------------------------------------------------
+  # Train the nn
+  #-------------------------------------------------------------------------------
+
+
+
+  train.x <- undersample_1_set_train
+  train.y <-target_undersample_1
+
+
+  #____________
+  data = mx.symbol.Variable('data')
+  #FIRST CONVOLUITIONAL LAYER + POOLING
+  conv1 = mx.symbol.Convolution(data=data, kernel=c(3, 3), num_filter = 3) 
+  relu1 = mx.symbol.Activation(data=conv1, act_type="relu") 
+  pool1 = mx.symbol.Pooling(data=relu1, pool_type="max", kernel=c(2,2), stride=c(2,2))
+
+
+  #SECOND CONVOLUTIONAL LAYER + POOLING
+  conv2 = mx.symbol.Convolution(data=pool1, kernel=c(3,3), num_filter = num_filters_conv2) 
+  relu2 = mx.symbol.Activation(data=conv2, act_type="relu")
+  pool2 = mx.symbol.Pooling(data=relu2, pool_type="max",kernel=c(2,2), stride=c(2,2)) 
+
+  #FLATTEN THE OUTPUT
+  flatten = mx.symbol.Flatten(data=pool2) 
+
+  #FEED FULLY CONNECTED LAYER, NUMBER OF HIDDEN NODES JUST GEOMETRIC MEAN OF INPUT(14.5 * 14.5  * 13 =  2733.25) AND OUTPUT (3), sqrt(2733.25*3) =  91
+  input_previo_a_filtroconv2 <- 14.5*14.5
+  n_input <- input_previo_a_filtroconv2 * num_filters_conv2
+  num_hidden_fc1 <- round(sqrt(n_input*n_output)) 
+
+  fc1 = mx.symbol.FullyConnected(data=flatten, num_hidden=84) 
+  relu4 = mx.symbol.Activation(data=fc1, act_type="relu") 
+
+  #____________
+
+
+  fc2 = mx.symbol.FullyConnected(data=relu4, num_hidden=3) #ESTA PARA CLASIFICACION
+
+  mi_softmax  = mx.symbol.SoftmaxOutput(data=fc2)
+
+
+  devices <- mx.cpu()
+
+  mx.set.seed(0)
+
+  #___
+  tic <- proc.time()
+  #___
+  model <- mx.model.FeedForward.create( mi_softmax #for clasification
+                                        , X=train.x
+                                        , y=train.y
+                                        , eval.data  = list("data" = set_validacion,"label" = label_set_validacion) 
+                                        , ctx=devices
+                                        , num.round=num.round
+                                        , array.batch.size = 75 
+                                        , learning.rate = learning.rate
+                                        , momentum = momentum
+                                        , wd=weight_decay
+                                        , eval.metric = mx.metric.mlogloss 
+                                        , initializer=mx.init.uniform(initializer) 
+                                        #, epoch.end.callback = mx.callback.save.checkpoint("modelo_guardado_ccs") #(TO SAVE MODEL AT EVERY ITERATION)
+                                        , batch.end.callback = mx.callback.log.train.metric(10)#, log)  
+                                        , array.layout="columnmajor"
+  ) 
+
+  #___
+  print(proc.time() - tic)
+  #___
+
+
+  #-------------------------------------------------------------------------------
+  # Validation
+  #-------------------------------------------------------------------------------
+
+    
+    preds <- predict(model, set_validacion,
+                     ctx = NULL,
+                     array.layout = "auto")
+    
+    #WE CAN INSPECT OUR LIMITED VALIDATION SET, PROBABILITIES:
+    predicciones <- t(preds)
+    predicciones <- cbind(label_set_validacion, predicciones)
+    head(predicciones)
+    
+\end{lstlisting}
+
+
+\subsection{TensorFlow+Keras}
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+            # This Python 3 environment comes with many helpful analytics libraries installed
+    # It is defined by the kaggle/python docker image: https://github.com/kaggle/docker-python
+    # For example, here's several helpful packages to load in
+
+    import numpy as np # linear algebra
+    import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+    import glob
+    import os
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import cv2
+
+    from multiprocessing import Pool, cpu_count
+    from subprocess import check_output
+    from subprocess import check_output
+    from PIL import ImageFilter, ImageStat, Image, ImageDraw
+    from sklearn.model_selection import GridSearchCV, StratifiedKFold
+    from sklearn.preprocessing import LabelEncoder
+    from sklearn.metrics import log_loss
+    from keras.wrappers.scikit_learn import KerasClassifier
+    from keras.models import Sequential
+    from keras.layers.core import Dense, Dropout, Flatten
+    from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
+    from keras import optimizers
+    from keras.wrappers.scikit_learn import KerasClassifier
+    from keras.models import Sequential
+    from keras.layers.core import Dense, Dropout, Flatten, Activation
+    from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
+    from keras import optimizers
+    from keras.preprocessing.image import ImageDataGenerator
+    from sklearn.model_selection import train_test_split
+    from keras.optimizers import SGD
+    from keras import backend as K
+    K.set_image_dim_ordering('th')
+    K.set_floatx('float32')
+
+
+    def roi(pathtrain):
+        for typ in types:
+            for img in os.listdir(pathtrain + '/' + typ):
+                image = pathtrain + '/'+typ+'/' + img
+                os.chdir(pathtrain + '/'+typ+'/')
+                ii=cv2.imread(image)
+                #cv.imshow('image',ii[:,:,1])
+                #cv.waitKey(0)
+                b,g,r = cv2.split(ii)
+                rgb_img = cv2.merge([r,g,b])
+                rgb_img1 = pc.rgb_to_hsv(rgb_img)
+                indices = np.where(rgb_img1[:,:,0]<0.7)
+                rgb_img1[:,:,0][indices]=0
+                rgb_img1[:,:,1][indices]=0
+                rgb_img1[:,:,2][indices]=0
+                rgb_img1 = pc.hsv_to_rgb(rgb_img1).astype(np.uint8)
+                pp.imsave(fname = img.split('.')[0] + '_trans.jpg',arr = rgb_img1)
+        return fname
+
+    def im_multi(path):
+        try:
+            im_stats_im_ = Image.open(path)
+            return [path, {'size': im_stats_im_.size}]
+        except:
+            print(path)
+            return [path, {'size': [0,0]}]
+
+    def im_stats(im_stats_df):
+        im_stats_d = {}
+        p = Pool(cpu_count())
+        ret = p.map(im_multi, im_stats_df['path'])
+        for i in range(len(ret)):
+            im_stats_d[ret[i][0]] = ret[i][1]
+        im_stats_df['size'] = im_stats_df['path'].map(lambda x: ' '.join(str(s) for s in im_stats_d[x]['size']))
+        return im_stats_df
+
+
+    def get_im_cv2(path):
+        img = cv2.imread(path)
+        resized = cv2.resize(img, (64, 64), cv2.INTER_LINEAR)
+        return [path, resized]
+
+    def normalize_image_features(paths):
+        imf_d = {}
+        p = Pool(cpu_count())
+        ret = p.map(get_im_cv2, paths)
+        for i in range(len(ret)):
+            imf_d[ret[i][0]] = ret[i][1]
+        ret = []
+        fdata = [imf_d[f] for f in paths]
+        fdata = np.array(fdata, dtype=np.uint8)
+        fdata = fdata.transpose((0, 3, 1, 2))
+        fdata = fdata.astype('float32')
+        fdata = fdata / 255
+        return fdata
+
+    def create_model(opt_='adamax'):
+        model = Sequential()
+        model.add(Convolution2D(4, 3, 3, activation='relu', dim_ordering='th', input_shape=(3, 64, 64))) #use input_shape=(3, 64, 64)
+        model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))
+        model.add(Convolution2D(8, 3, 3, activation='relu', dim_ordering='th'))
+        model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))
+        model.add(Dropout(0.2))
+
+        model.add(Flatten())
+        model.add(Dense(12, activation='tanh'))
+        model.add(Dropout(0.1))
+        model.add(Dense(3, activation='softmax'))
+
+        model.compile(optimizer=opt_, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        return model
+
+
+
+    def main():
+        os.chdir('D:\Facultad\Master\Segundo cuatrimestre\SIGE\PracticaFinal')
+        test = glob.glob("pruebaTest/*.jpg")
+        test = pd.DataFrame([[p[11:len(p)],p] for p in test], columns = ['image','path'])
+        train= glob.glob("prueba1/**/*.png")+glob.glob("prueba2/**/*.jpg")
+        train = pd.DataFrame([[p[0][8:14],p[0][15:len(p)],p] for p in train], columns = ['type','image','path'])
+
+        train = im_stats(train)
+        train = train[train['size'] != '0 0'].reset_index(drop=True) #remove bad images
+        train_data = normalize_image_features(train['path'])
+
+        np.save('train.npy', train_data, allow_pickle=True, fix_imports=True)
+
+        print(len(train))
+
+        le = LabelEncoder()
+        train_target = le.fit_transform(train['type'].values)
+        print(le.classes_) #in case not 1 to 3 order
+        np.save('train_target.npy', train_target, allow_pickle=True, fix_imports=True)
+        test_data = normalize_image_features(test['path'])
+
+        np.save('test.npy', test_data, allow_pickle=True, fix_imports=True)
+
+        test_id = test.image.values
+        np.save('test_id.npy', test_id, allow_pickle=True, fix_imports=True)
+
+        train_data = np.load('train.npy')
+        train_target = np.load('train_target.npy')
+
+        x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.4, random_state=17)
+
+
+        datagen = ImageDataGenerator(rotation_range=0.3, zoom_range=0.3)
+        datagen.fit(train_data)
+
+
+        model = create_model()
+        print(x_train.shape)
+        print(y_train.shape)
+        model.fit_generator(datagen.flow(x_train,y_train, batch_size=15, shuffle=True), nb_epoch=35, samples_per_epoch=len(x_train), verbose=20, validation_data=(x_val_train, y_val_train))
+
+        test_data = np.load('test.npy')
+        test_id = np.load('test_id.npy')
+
+        pred = model.predict_proba(test_data)
+        df = pd.DataFrame(pred, columns=['Type_1','Type_2','Type_3'])
+        df['image_name'] = test_id
+        df.to_csv('submission0009.csv', index=False)
+
+    if __name__ == '__main__':
+        #freeze_support() # Optional under circumstances described in docs
+        main()
+
+\end{lstlisting}
 
 
 \section{Fine Tunning}
 
-
-\section{Transfer Learning}
 
 \pagebreak
 \clearpage
