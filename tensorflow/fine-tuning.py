@@ -12,16 +12,13 @@ import cv2
 
 from multiprocessing import Pool, cpu_count
 from subprocess import check_output
-from subprocess import check_output
 from PIL import ImageFilter, ImageStat, Image, ImageDraw
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import log_loss
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.models import Sequential
-from keras import optimizers
 from keras.wrappers.scikit_learn import KerasClassifier
-from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Flatten, Activation
 from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
 from keras import optimizers
@@ -30,8 +27,8 @@ from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
 from keras.applications.resnet50 import ResNet50
 from keras import backend as K
+from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Flatten
-K.set_image_dim_ordering('th')
 K.set_floatx('float32')
 
 
@@ -71,10 +68,9 @@ def im_stats(im_stats_df):
     im_stats_df['size'] = im_stats_df['path'].map(lambda x: ' '.join(str(s) for s in im_stats_d[x]['size']))
     return im_stats_df
 
-
 def get_im_cv2(path):
     img = cv2.imread(path)
-    resized = cv2.resize(img, (64, 64), cv2.INTER_LINEAR)
+    resized = cv2.resize(img, (224, 224), cv2.INTER_LINEAR)
     return [path, resized]
 
 def normalize_image_features(paths):
@@ -92,59 +88,58 @@ def normalize_image_features(paths):
 
 def main():
     os.chdir('D:\Facultad\Master\Segundo cuatrimestre\SIGE\PracticaFinal')
+
     test = glob.glob("pruebaTest/*.jpg")
     test = pd.DataFrame([[p[11:len(p)],p] for p in test], columns = ['image','path'])
-    train= glob.glob("prueba1/**/*.png")+glob.glob("prueba2/**/*.jpg")
-    train = pd.DataFrame([[p[8:14],p[15:len(p)],p] for p in train], columns = ['type','image','path'])
-
-    train = im_stats(train)
-    train = train[train['size'] != '0 0'].reset_index(drop=True) #remove bad images
-    train_data = normalize_image_features(train['path'])
-
-    np.save('train.npy', train_data, allow_pickle=True, fix_imports=True)
-
-    print(len(train))
-
-    le = LabelEncoder()
-    train_target = le.fit_transform(train['type'].values)
-    print(le.classes_) #in case not 1 to 3 order
-    np.save('train_target.npy', train_target, allow_pickle=True, fix_imports=True)
     test_data = normalize_image_features(test['path'])
-
     np.save('test.npy', test_data, allow_pickle=True, fix_imports=True)
-
     test_id = test.image.values
     np.save('test_id.npy', test_id, allow_pickle=True, fix_imports=True)
 
-    x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.25, random_state=17)
+    train= glob.glob("prueba1/**/*.png")+glob.glob("prueba2/**/*.jpg")
+    train = pd.DataFrame([[p[8:14],p[15:len(p)],p] for p in train], columns = ['type','image','path'])
+    train = im_stats(train)
+    train = train[train['size'] != '0 0'].reset_index(drop=True) #remove bad images
+    train_data = normalize_image_features(train['path'])
+    np.save('train.npy', train_data, allow_pickle=True, fix_imports=True)
+    le = LabelEncoder()
+    train_target = le.fit_transform(train['type'].values)
+    np.save('train_target.npy', train_target, allow_pickle=True, fix_imports=True)
+
+    x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.25, random_state=14)
 
 
     datagen = ImageDataGenerator(rotation_range=0.3, zoom_range=0.3)
-
     datagen.fit(train_data)
 
     base_model = ResNet50(weights='imagenet', include_top=False)
 
-    x = Flatten()(base_model.output)
+     # add a global spatial average pooling layer
+    x = GlobalAveragePooling2D()(base_model.output)
+    # add a fully-connected layer
+    x = Dense(512, activation='relu')(x)
+    # add a logistic layer
     output = Dense(3, activation='softmax')(x)
 
-    model = Model(inputs=base_model.input, outputs=output)
-
-    # train only the top layers
     for layer in base_model.layers:
         layer.trainable = False
 
-    # compile the model
+    model = Model(inputs=base_model.input, outputs=output)
+
+    for layer in base_model.layers:
+        layer.trainable = False
+
     model.compile(optimizer='adamax', loss='sparse_categorical_crossentropy')
     model.summary()
 
-    print('Training...')
-    model.fit_generator(generator=datagen.flow(x_train, y_train,
-                        batch_size=15, shuffle=True),
-                        validation_data=(x_val_train, y_val_train),
-                        verbose=1, epochs=35, samples_per_epoch=len(x_train))
+    print("Entrenando...")
 
-    print('Predicting...')
+    model.fit_generator(generator=datagen.flow(x_train, y_train,
+                        batch_size=5, shuffle=True),
+                        validation_data=(x_val_train, y_val_train),
+                        verbose=1, epochs=35, steps_per_epoch=len(x_train) / 5)
+
+
     pred = model.predict(test_data)
 
     df = pd.DataFrame(pred, columns=['Type_1','Type_2','Type_3'])
