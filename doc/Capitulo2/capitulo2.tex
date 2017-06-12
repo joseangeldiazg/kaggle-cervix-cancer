@@ -7,6 +7,60 @@
 \chapter{Preprocesado}
 \label{preprocesado}
 
+En este capítulo enunciaremos el proceso de preprocesado llevado a cabo durante la realización de la práctica. Cabe destacar, que por facilitar la comprensión todo el proceso se enuncia en este capítulo, pero hay ciertos puntos como el del proceso de undersampling (sección \ref{undersampling}) y el de corte de las imágenes  (sección \ref{cut}) que surgen fruto de cambios e ideas en el proceso de aprendizaje y entrenamiento de las redes neuronales. 
+
+\section{Resize data}
+
+Como veremos en el capítulo de conclusion, uno de los requisitos y mayores problemas que esta práctica a ofrecido han sido las limitaciones de memoria tanto de principal para computo como de memoria secundaria para almacenar todas las imágenes y sus diferentes versiones. Con el fin de poder manejar estas más eficientemente se ha realizado un resize de las mismas a tamaño de 256x256px, para ello hemos seguido el siguiente script en R. 
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+  #-------------------------------------------------------------------------------
+
+  # Clear workspace
+  rm(list=ls())
+
+  #-------------------------------------------------------------------------------
+  # Load and pre-process images
+  #-------------------------------------------------------------------------------
+
+  # Set run parameters parameters
+  test_img_path <- "."
+  width  <- 256
+  height <- 256
+
+
+  #-------------------------------------------------------------------------------
+  # Load and pre-process train images
+  #-------------------------------------------------------------------------------
+
+  # Load EBImage library
+  library(EBImage)
+
+  # Load images into a dataframe
+  library(gsubfn)
+  img_file_list <- list.files(path = test_img_path, pattern = "*.jpg", full.names = TRUE, recursive = TRUE)
+
+  train_df <- data.frame()
+
+  for(i in 1:length(img_file_list)) {
+    img_file_name <- img_file_list[i]
+    #img_class <- strapplyc(img_file_list[i], ".*/Type_(.*)/")[[1]]
+    img <- readImage(img_file_name)
+    img_resized <- resize(img, w=width, h=height)
+    
+    name <- paste("reducidas",img_file_name, sep="/")
+    dir.create("reducidas", showWarnings = FALSE)
+    writeImage(img_resized, name)
+    
+  }  
+\end{lstlisting}
+
+\section{Cut data}
+\label{cut}
+
+
 \section{Data Augmentation}
 
 \lstset{language=R, breaklines=true, basicstyle=\footnotesize}
@@ -16,21 +70,20 @@
 \end{lstlisting}
 
 
-\begin{figure}[H]
-	\centering
-		\includegraphics[scale=0.4]{./Capitulo2/imagenes/histcomp.png}
-		\caption{Comparación de la imputación de valores perdidos.}
-	\label{histcomp}
-\end{figure} 
+
+\section{Undersampling}
+\label{undersampling}
 
 
-\section{Imbalance learning}
+%\begin{figure}[H]
+%	\centering
+%		\includegraphics[scale=0.4]{./Capitulo2/imagenes/histcomp.png}
+%		\caption{Comparación de la imputación de valores perdidos.}
+%	\label{histcomp}
+%\end{figure} 
 
-\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
-\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
-\begin{lstlisting}
-        
-\end{lstlisting}
+
+
 
 \pagebreak
 \clearpage
