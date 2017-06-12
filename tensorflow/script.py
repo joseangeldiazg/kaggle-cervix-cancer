@@ -12,7 +12,6 @@ import cv2
 
 from multiprocessing import Pool, cpu_count
 from subprocess import check_output
-from subprocess import check_output
 from PIL import ImageFilter, ImageStat, Image, ImageDraw
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import LabelEncoder
@@ -22,7 +21,10 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Flatten
 from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
 from keras import optimizers
-
+from keras.applications.resnet50 import ResNet50
+from keras.layers import Dense, GlobalAveragePooling2D, Flatten
+from keras.models import Model
+from keras.optimizers import SGD
 
 def im_multi(path):
     try:
@@ -82,7 +84,7 @@ def main():
     test = glob.glob("pruebaTest/*.jpg")
     test = pd.DataFrame([[p[11:len(p)],p] for p in test], columns = ['image','path'])
     train= glob.glob("prueba1/**/*.png")+glob.glob("prueba2/**/*.jpg")
-    train = pd.DataFrame([[p[0][8:14],p[0][15:len(p)],p] for p in train], columns = ['type','image','path'])
+    train = pd.DataFrame([[p[8:14],p[15:len(p)],p] for p in train], columns = ['type','image','path'])
 
     types = train.groupby('type', as_index=False).count()
     types.plot(kind='bar', x='type', y='path', figsize=(7,4))

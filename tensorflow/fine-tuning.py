@@ -19,8 +19,6 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import log_loss
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Flatten
-from keras.layers.convolutional import Convolution2D, ZeroPadding2D, MaxPooling2D
 from keras import optimizers
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.models import Sequential
@@ -30,7 +28,9 @@ from keras import optimizers
 from keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from keras.optimizers import SGD
+from keras.applications.resnet50 import ResNet50
 from keras import backend as K
+from keras.layers import Dense, GlobalAveragePooling2D, Flatten
 K.set_image_dim_ordering('th')
 K.set_floatx('float32')
 
@@ -86,35 +86,16 @@ def normalize_image_features(paths):
     ret = []
     fdata = [imf_d[f] for f in paths]
     fdata = np.array(fdata, dtype=np.uint8)
-    fdata = fdata.transpose((0, 3, 1, 2))
     fdata = fdata.astype('float32')
     fdata = fdata / 255
     return fdata
-
-def create_model(opt_='adamax'):
-    model = Sequential()
-    model.add(Convolution2D(4, 3, 3, activation='relu', dim_ordering='th', input_shape=(3, 64, 64))) #use input_shape=(3, 64, 64)
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))
-    model.add(Convolution2D(8, 3, 3, activation='relu', dim_ordering='th'))
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))
-    model.add(Dropout(0.2))
-
-    model.add(Flatten())
-    model.add(Dense(12, activation='tanh'))
-    model.add(Dropout(0.1))
-    model.add(Dense(3, activation='softmax'))
-
-    model.compile(optimizer=opt_, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-    return model
-
-
 
 def main():
     os.chdir('D:\Facultad\Master\Segundo cuatrimestre\SIGE\PracticaFinal')
     test = glob.glob("pruebaTest/*.jpg")
     test = pd.DataFrame([[p[11:len(p)],p] for p in test], columns = ['image','path'])
     train= glob.glob("prueba1/**/*.png")+glob.glob("prueba2/**/*.jpg")
-    train = pd.DataFrame([[p[8:14],[15:len(p)],p] for p in train], columns = ['type','image','path'])
+    train = pd.DataFrame([[p[8:14],p[15:len(p)],p] for p in train], columns = ['type','image','path'])
 
     train = im_stats(train)
     train = train[train['size'] != '0 0'].reset_index(drop=True) #remove bad images
@@ -135,28 +116,40 @@ def main():
     test_id = test.image.values
     np.save('test_id.npy', test_id, allow_pickle=True, fix_imports=True)
 
-    train_data = np.load('train.npy')
-    train_target = np.load('train_target.npy')
-
-    x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.4, random_state=17)
+    x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.25, random_state=17)
 
 
     datagen = ImageDataGenerator(rotation_range=0.3, zoom_range=0.3)
+
     datagen.fit(train_data)
 
+    base_model = ResNet50(weights='imagenet', include_top=False)
 
-    model = create_model()
-    print(x_train.shape)
-    print(y_train.shape)
-    model.fit_generator(datagen.flow(x_train,y_train, batch_size=15, shuffle=True), nb_epoch=35, samples_per_epoch=len(x_train), verbose=20, validation_data=(x_val_train, y_val_train))
+    x = Flatten()(base_model.output)
+    output = Dense(3, activation='softmax')(x)
 
-    test_data = np.load('test.npy')
-    test_id = np.load('test_id.npy')
+    model = Model(inputs=base_model.input, outputs=output)
 
-    pred = model.predict_proba(test_data)
+    # train only the top layers
+    for layer in base_model.layers:
+        layer.trainable = False
+
+    # compile the model
+    model.compile(optimizer='adamax', loss='sparse_categorical_crossentropy')
+    model.summary()
+
+    print('Training...')
+    model.fit_generator(generator=datagen.flow(x_train, y_train,
+                        batch_size=15, shuffle=True),
+                        validation_data=(x_val_train, y_val_train),
+                        verbose=1, epochs=35, samples_per_epoch=len(x_train))
+
+    print('Predicting...')
+    pred = model.predict(test_data)
+
     df = pd.DataFrame(pred, columns=['Type_1','Type_2','Type_3'])
     df['image_name'] = test_id
-    df.to_csv('submission0009.csv', index=False)
+    df.to_csv('submission.csv', index=False)
 
 if __name__ == '__main__':
     #freeze_support() # Optional under circumstances described in docs
