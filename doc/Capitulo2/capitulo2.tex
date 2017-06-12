@@ -11,7 +11,7 @@ En este capítulo enunciaremos el proceso de preprocesado llevado a cabo durante 
 
 \section{Resize data}
 
-Como veremos en el capítulo de conclusion, uno de los requisitos y mayores problemas que esta práctica a ofrecido han sido las limitaciones de memoria tanto de principal para computo como de memoria secundaria para almacenar todas las imágenes y sus diferentes versiones. Con el fin de poder manejar estas más eficientemente se ha realizado un resize de las mismas a tamaño de 256x256px, para ello hemos seguido el siguiente script en R. 
+Como veremos en el capítulo de conclusión, uno de los requisitos y mayores problemas que esta práctica a ofrecido han sido las limitaciones de memoria tanto de principal para computo como de memoria secundaria para almacenar todas las imágenes y sus diferentes versiones. Con el fin de poder manejar estas más eficientemente se ha realizado un resize de las mismas a tamaño de 256x256px, para ello hemos seguido el siguiente script en R. 
 
 \lstset{language=R, breaklines=true, basicstyle=\footnotesize}
 \lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
@@ -57,9 +57,87 @@ Como veremos en el capítulo de conclusion, uno de los requisitos y mayores probl
   }  
 \end{lstlisting}
 
+Con este simple script podemos preprocesar las imágenes originales y reducirías de tamaño de manera que son mas fácilmente manejables, pero esto nos da un problema asociado y es que estamos modificando los datos originales.
+
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo2/imagenes/resize.png}
+		\caption{Deformación de la imagen al redimensionar.}
+	\label{resize}
+\end{figure} 
+
+Tal y como podemos apreciar en la figura \ref{resize} si una imagen rectangular la `obligamos' a ser cuadrada, estamos deformando el contenido por lo que ya tendremos otra imagen distinta de la original,  a este problema la estudiaremos en la siguiente sección. 
+
 \section{Cut data}
 \label{cut}
 
+Siguiendo con el ejemplo de la sección anterior, la solución a la deformación de la imagen pasa por cortar al ratio de aspecto 1:1 y posteriormente redimensionar para tener imágenes de menos peso. Este paso, puede explicarse con la imagen \ref{crop}.
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo2/imagenes/crop.png}
+		\caption{Cortado de la imagen.}
+	\label{crop}
+\end{figure} 
+
+La altura de la imagen debe ser por tanto igual al ancho de la misma y para ello, debemos quitar los espacios que vemos en la imagen anterior, tras lo cual tendremos una imagen cuadrada pero sin deformar el contenido, además de quitar partes de la imagen que en más del 90\% de los casos no tienen importancia. Para calcular el corte hemos usado la ecuación \ref{eq:corte}, que nos da el valor que deberemos substraer de la imagen original tanto por la parte superior como por la inferior. 
+
+\begin{equation} 
+corte=\frac{height-widht}{2}
+\label{eq:corte}
+\end{equation}
+
+El script que usamos para este objetivo es el siguiente:
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+  #-------------------------------------------------------------------------------
+  # This script cut the images to prevent original data deformation 
+  #-------------------------------------------------------------------------------
+
+
+  #setwd("D:/Facultad/Master/Segundo cuatrimestre/SIGE/PracticaFinal")
+  # Clear workspace
+  rm(list=ls())
+
+  # Set run parameters parameters
+  test_img_path <- "."
+
+  # Load EBImage library
+  library(EBImage)
+  # Load images into a dataframe
+  library(gsubfn)
+  img_file_list <- list.files(path = test_img_path, pattern = "*.jpg", full.names = TRUE, recursive = FALSE)
+  
+  img_file_list
+  dir.create("crop", showWarnings = FALSE)
+  for(i in 1:length(img_file_list)) {
+    
+    img_file_name <- img_file_list[i]
+    name <- paste("crop",img_file_name, sep="/")
+    print(name)
+    if(!file.exists(name)){
+      img <- readImage(img_file_name)
+      width <- dim(img)[1]
+      heigth <- dim(img)[2]
+      if (width < heigth){ 
+        cut <- (heigth-width)/2
+        p <- heigth-cut
+        img2 <- img[0:width,cut:p,]
+      }else{
+        cut <- (width-heigth)/2
+        p <- width-cut
+        img2 <- img[cut:p,0:heigth,]
+      }
+
+      writeImage(img2, name)
+    }
+    
+  }
+  print("Finalizado")
+\end{lstlisting}
 
 \section{Data Augmentation}
 
@@ -75,12 +153,7 @@ Como veremos en el capítulo de conclusion, uno de los requisitos y mayores probl
 \label{undersampling}
 
 
-%\begin{figure}[H]
-%	\centering
-%		\includegraphics[scale=0.4]{./Capitulo2/imagenes/histcomp.png}
-%		\caption{Comparación de la imputación de valores perdidos.}
-%	\label{histcomp}
-%\end{figure} 
+
 
 
 
