@@ -35,25 +35,6 @@ K.set_image_dim_ordering('th')
 K.set_floatx('float32')
 
 
-def roi(pathtrain):
-    for typ in types:
-        for img in os.listdir(pathtrain + '/' + typ):
-            image = pathtrain + '/'+typ+'/' + img
-            os.chdir(pathtrain + '/'+typ+'/')
-            ii=cv2.imread(image)
-            #cv.imshow('image',ii[:,:,1])
-            #cv.waitKey(0)
-            b,g,r = cv2.split(ii)
-            rgb_img = cv2.merge([r,g,b])
-            rgb_img1 = pc.rgb_to_hsv(rgb_img)
-            indices = np.where(rgb_img1[:,:,0]<0.7)
-            rgb_img1[:,:,0][indices]=0
-            rgb_img1[:,:,1][indices]=0
-            rgb_img1[:,:,2][indices]=0
-            rgb_img1 = pc.hsv_to_rgb(rgb_img1).astype(np.uint8)
-            pp.imsave(fname = img.split('.')[0] + '_trans.jpg',arr = rgb_img1)
-    return fname
-
 def im_multi(path):
     try:
         im_stats_im_ = Image.open(path)
@@ -93,10 +74,10 @@ def normalize_image_features(paths):
 
 def create_model(opt_='adamax'):
     model = Sequential()
-    model.add(Convolution2D(4, 3, 3, activation='relu', dim_ordering='th', input_shape=(3, 64, 64))) #use input_shape=(3, 64, 64)
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))
+    model.add(Convolution2D(4, 3, 3, activation='relu', dim_ordering='th', input_shape=(3, 32, 32))) #use input_shape=(3, 64, 64)
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering='th'))
     model.add(Convolution2D(8, 3, 3, activation='relu', dim_ordering='th'))
-    model.add(MaxPooling2D(pool_size=(3, 3), strides=(3, 3), dim_ordering='th'))
+    model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2), dim_ordering='th'))
     model.add(Dropout(0.2))
 
     model.add(Flatten())
@@ -121,6 +102,7 @@ def main():
     train_data = normalize_image_features(train['path'])
 
     np.save('train.npy', train_data, allow_pickle=True, fix_imports=True)
+    np.random.seed(17)
 
     print(len(train))
 
