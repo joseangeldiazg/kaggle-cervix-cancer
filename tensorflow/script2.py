@@ -123,7 +123,16 @@ def main():
     x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.4, random_state=17)
 
 
-    datagen = ImageDataGenerator(rotation_range=0.3, zoom_range=0.3)
+    datagen = ImageDataGenerator(
+            rotation_range=180,
+			width_shift_range=0.2,
+			height_shift_range=0.2,
+			shear_range=0.2,
+			zoom_range=0.2,
+			horizontal_flip=True,
+			vertical_flip=True,
+			fill_mode='nearest')
+            
     datagen.fit(train_data)
 
 

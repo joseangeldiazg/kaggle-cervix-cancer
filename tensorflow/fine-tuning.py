@@ -32,25 +32,6 @@ from keras.layers import Dense, GlobalAveragePooling2D, Flatten
 K.set_floatx('float32')
 
 
-def roi(pathtrain):
-    for typ in types:
-        for img in os.listdir(pathtrain + '/' + typ):
-            image = pathtrain + '/'+typ+'/' + img
-            os.chdir(pathtrain + '/'+typ+'/')
-            ii=cv2.imread(image)
-            #cv.imshow('image',ii[:,:,1])
-            #cv.waitKey(0)
-            b,g,r = cv2.split(ii)
-            rgb_img = cv2.merge([r,g,b])
-            rgb_img1 = pc.rgb_to_hsv(rgb_img)
-            indices = np.where(rgb_img1[:,:,0]<0.7)
-            rgb_img1[:,:,0][indices]=0
-            rgb_img1[:,:,1][indices]=0
-            rgb_img1[:,:,2][indices]=0
-            rgb_img1 = pc.hsv_to_rgb(rgb_img1).astype(np.uint8)
-            pp.imsave(fname = img.split('.')[0] + '_trans.jpg',arr = rgb_img1)
-    return fname
-
 def im_multi(path):
     try:
         im_stats_im_ = Image.open(path)
@@ -89,13 +70,6 @@ def normalize_image_features(paths):
 def main():
     os.chdir('D:\Facultad\Master\Segundo cuatrimestre\SIGE\PracticaFinal')
 
-    test = glob.glob("pruebaTest/*.jpg")
-    test = pd.DataFrame([[p[11:len(p)],p] for p in test], columns = ['image','path'])
-    test_data = normalize_image_features(test['path'])
-    np.save('test.npy', test_data, allow_pickle=True, fix_imports=True)
-    test_id = test.image.values
-    np.save('test_id.npy', test_id, allow_pickle=True, fix_imports=True)
-
     train= glob.glob("prueba1/**/*.png")+glob.glob("prueba2/**/*.jpg")
     train = pd.DataFrame([[p[8:14],p[15:len(p)],p] for p in train], columns = ['type','image','path'])
     train = im_stats(train)
@@ -108,8 +82,16 @@ def main():
 
     x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.25, random_state=14)
 
+    datagen = ImageDataGenerator(r
+        rotation_range=180,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        shear_range=0.2,
+        zoom_range=0.2,
+        horizontal_flip=True,
+        vertical_flip=True,
+        fill_mode='nearest')
 
-    datagen = ImageDataGenerator(rotation_range=0.3, zoom_range=0.3)
     datagen.fit(train_data)
 
     base_model = ResNet50(weights='imagenet', include_top=False)
@@ -131,20 +113,28 @@ def main():
 
     model.compile(optimizer='adamax', loss='sparse_categorical_crossentropy')
     model.summary()
+    model_json = model.to_json()
+
+    experimento_path="/Experimentos/fine"
+
+    if not os.path.exists(experimento_path):
+		os.makedirs(experimento_path)
+
+	with open(experiment_name + "/" + "model.json","w") as json_file:
+		json_file.write(model_json)
 
     print("Entrenando...")
+
+    filepath= + "/checkpoint-val_loss{val_loss:.5f}.hdf5"
+    checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='max')
+    callbacks_list = [checkpoint]
 
     model.fit_generator(generator=datagen.flow(x_train, y_train,
                         batch_size=5, shuffle=True),
                         validation_data=(x_val_train, y_val_train),
-                        verbose=1, epochs=35, steps_per_epoch=len(x_train) / 5)
+                        verbose=1, epochs=35, steps_per_epoch=len(x_train), callbacks=callbacks_list)
 
 
-    pred = model.predict(test_data)
-
-    df = pd.DataFrame(pred, columns=['Type_1','Type_2','Type_3'])
-    df['image_name'] = test_id
-    df.to_csv('submission.csv', index=False)
 
 if __name__ == '__main__':
     #freeze_support() # Optional under circumstances described in docs
