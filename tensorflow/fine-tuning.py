@@ -115,7 +115,7 @@ def main():
     model.summary()
     model_json = model.to_json()
 
-    experimento_path="/Experimentos/fine"
+    experimento_path="/Experimentos/Fine"
 
     if not os.path.exists(experimento_path):
 		os.makedirs(experimento_path)

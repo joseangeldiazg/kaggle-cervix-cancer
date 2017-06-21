@@ -7,7 +7,7 @@
 \chapter{Clasificación con NN}
 \label{nn}
 
-En este capitulo veremos el proceso seguido y las distintas vertientes de entrenamiento usadas a lo largo de la realización de la práctica. Concretamente veremos entrenamiento \textit{from scratch} con dos tecnologías distintas y por último \textit{fine tunning}. 
+En este capítulo veremos el proceso seguido y las distintas vertientes de entrenamiento usadas a lo largo de la realización de la práctica. Concretamente veremos entrenamiento \textit{from scratch} con dos tecnologías distintas y por último \textit{fine tuning}. 
 
 
 \section{Intel Deeplearning SDK}
@@ -16,16 +16,18 @@ Como el software se ve en la práctica y en virtud de probar todos y cada uno de 
 
 \section{From Scratch}
 
-La estrategia seguida en una competición en la que el tiempo de computo era un factor claramente privativo, ha pasado por afinar el proceso de preprocesado de datos con scripts que ofrecían resultados 'aceptables` en poco tiempo de computo. Por ello, nos hemos basado en redes neuronales muy sencillas, sobre las cuales podríamos ir probando distintas combinaciones de preprocesado, como las vistas en el capítulo \ref{preprocesado} y ver cuales son las que mejor se adaptan a nuestro problema, con la premisa de si funcionan bien en una red sencilla también lo harán en redes mas complejas. Las redes elaboradas provienen de kernels de Kaggle, concretamente la de MXNET proviene del siguiente tutorial \cite{tutorial1}  y la de TensorFlow de este otro \cite{tutorial2}, aunque si bien el código ha sido modificado para adaptarlo a nuestros requisitos. 
+La estrategia seguida en una competición en la que el tiempo de computo era un factor claramente privativo, ha pasado por afinar el proceso de preprocesado de datos con scripts que ofrecían resultados 'aceptables` en poco tiempo de computo. Por ello, nos hemos basado en redes neuronales muy sencillas, sobre las cuales podríamos ir probando distintas combinaciones de preprocesado, como las vistas en el capítulo \ref{preprocesado} y ver cuales son las que mejor se adaptan a nuestro problema, con la premisa de si funcionan bien en una red sencilla también lo harán en redes más complejas. Las redes elaboradas provienen de kernels de Kaggle, concretamente la de MXNET proviene del siguiente tutorial \cite{tutorial1}  y la de TensorFlow de este otro \cite{tutorial2}, aunque si bien el código ha sido modificado para adaptarlo a nuestros requisitos. 
 
 \subsection{Mxnet}
 
-El siguiente script fue 
+El siguiente script ha sido el empleado para la realización del proceso from scratch con la máquina \ref{ord_personal1} ya que esta no dispone de GPU. De este script visto en Kaggle, obtuvimos la idea de comprobar el sesgo de las clases y el balanceo ya que en este se comprueba dicho punto. 
+
+En este script, se añaden un valor por cada uno de los colores (RGB) para cada uno de los pixeles de la imagen y se entrena con ello. La red es muy sencilla, y está lejos del estado del arte con redes convolutivas más complejas por ello, los resultados obtenidos por la misma, son del orden de 0.3XX de probabilidad a cada una de las clases, lo que implica valores de log loss muy malos y Accuracy de 0.4 lo que implica una clasificación casi aleatoria al tener un problema con tres clases. 
 
 \lstset{language=R, breaklines=true, basicstyle=\footnotesize}
 \lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
 \begin{lstlisting}
-          #-------------------------------------------------------------------------------
+  #-------------------------------------------------------------------------------
   # Kaggle Intel Cervix Cancer Challenge
   #
   #
@@ -356,13 +358,15 @@ El siguiente script fue
     
 \end{lstlisting}
 
+Viendo las deficiencias de esta solución,  pasamos al uso de TensorFlow+Keras, del cual encontramos más información en la literatura. 
 
 \subsection{TensorFlow+Keras}
 
 \lstset{language=R, breaklines=true, basicstyle=\footnotesize}
 \lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
 \begin{lstlisting}
-            # This Python 3 environment comes with many helpful analytics libraries installed
+
+    # This Python 3 environment comes with many helpful analytics libraries installed
     # It is defined by the kaggle/python docker image: https://github.com/kaggle/docker-python
     # For example, here's several helpful packages to load in
 

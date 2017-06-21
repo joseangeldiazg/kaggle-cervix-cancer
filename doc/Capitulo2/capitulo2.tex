@@ -139,24 +139,120 @@ El script que usamos para este objetivo es el siguiente:
   print("Finalizado")
 \end{lstlisting}
 
-\section{Data Augmentation}
+\section{Data Aumentation}
+\label{aumentation}
+Uno de los principales problemas en \textit{deep learning} es la falta de datos. Para ello, pueden usarse técnicas de \textit{data aumentation} que consisten en aplicar ligeras transformaciones a las imágenes para conseguir un conjunto de entrenamiento mayor. Para ello, hemos usado dos vertientes, una con R (siguiente script) con la que obtenemos imágenes modificadas en ficheros separados para poder ir combinándolas como deseemos, y por último, en el código Python que veremos en puntos siguientes, sobre estas volvíamos a aplicar una serie de cambios aumentando por tanto el data set bastante.   
 
 \lstset{language=R, breaklines=true, basicstyle=\footnotesize}
 \lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
 \begin{lstlisting}
+
+  #-------------------------------------------------------------------------------
+
+  # Clear workspace
+  rm(list=ls())
+
+  #-------------------------------------------------------------------------------
+  # Load and pre-process images
+  #-------------------------------------------------------------------------------
+
+  # Set run parameters parameters
+  train_img_1_path <- "./Type_1"
+  train_img_2_path <- "./Type_2"
+  train_img_3_path <- "./Type_3"
+
+
+  #-------------------------------------------------------------------------------
+  # Load and pre-process train images
+  #-------------------------------------------------------------------------------
+
+  # Load EBImage library
+  library(EBImage)
+
+  # Load images into a dataframe
+  library(gsubfn)
+  img_file_1_list <- list.files(path = train_img_1_path, pattern = "*.jpg", full.names = TRUE, recursive = TRUE)
+  img_file_2_list <- list.files(path = train_img_2_path, pattern = "*.jpg", full.names = TRUE, recursive = TRUE)
+  img_file_3_list <- list.files(path = train_img_3_path, pattern = "*.jpg", full.names = TRUE, recursive = TRUE)
+
+
+  #train_df <- data.frame()
+
+  #Hacemos 3 bucles porque tienen tama?os distintos cada clase.
+
+  Imagenes<-function(image,type) {
+    img_file_name <- image
+    
+    img <- readImage(img_file_name)
+    
+    if(type=="flip"){
+      img <- flip(img)
+    }
+    
+    if(type=="flop"){
+      img <- flop(img)
+    }
+    
+    if(type=="rot"){
+      img = rotate(img, 90, bg.col = "white")
+    }
+    if(type=="trans"){
+      img_t = transpose(img)
+    }
+    
+    #print("IMG_FILE_NAME")
+    #print(img_file_name)
+    
+    salida <- substr(img_file_name, 0, 8)
+    name <- paste(salida,type, sep="/")
+    salida <- substr(img_file_name, 10,nchar(img_file_name) )
+    #print("salida")
+    #print(salida)
+    salida <- paste(type,salida, sep="-")
+    
+    name2 <- paste(name,salida, sep="/")
+    #print("NAME2")
+    #print(name2)
+    
+    dir.create(name, showWarnings = FALSE)
+    writeImage(img, name2)
+  }
+
+
+
+  tipos<-function(imagen){
+    Imagenes(imagen,"flip")
+    Imagenes(imagen,"flop")
+    Imagenes(imagen,"rot")
+    Imagenes(imagen,"trans")
+  }
+
+  for(i in 1:length(img_file_1_list)) {
+    tipos(img_file_1_list[i])
+  }
+
+
+  for(i in 1:length(img_file_2_list)) {
+    tipos(img_file_2_list[i])
+  }
+
+  for(i in 1:length(img_file_3_list)) {
+    
+    tipos(img_file_3_list[i])
+    
+  }
+
+  print("FINALIZADO")
+
         
 \end{lstlisting}
-
-
 
 \section{Undersampling}
 \label{undersampling}
 
+Por último, en nuestro proceso de pre-procesado, descubrimos que las clases mostraban cierto desequilibrio. Concretamente, la clase1 frente a clase 3 de 1,66, y de clase 1 frente a clase 2 de 2,35. Aunque no es mucho, están por encima del 1,5, valor a partir del cual se considera un problema de clase desequilibradas. 
 
-
-
-
-
+Para intentar solventar este problema, quitamos algunas imágenes de las clases mayoritarias intentando siempre que las imágenes originales estuvieran presentes entre las seleccionadas, de manera que se suprimieron algunas de las transformaciones obteniendo ratios de balanceo por debajo del 1.5. Esta solución, al evaluar en test, lejos de mejorar empeoraba el modelo ya que como hemos visto en \ref{aumentation} el principal problema a solventar en esta competición es la falta de información en training y con esta técnica, aunque igualamos clases, perdemos información que puede ser decisiva. 
 
 \pagebreak
 \clearpage
