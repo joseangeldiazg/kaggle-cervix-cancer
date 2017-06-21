@@ -492,7 +492,106 @@ if __name__ == '__main__':
 
 \section{Red ya entrenada}
 
-Para probar este punto hemos seguido el script que podemos ver en :
+Para probar este punto hemos seguido el script que podemos ver en \cite{tutorial3} . En el se usa la red Inception\_BN, que es el estado del arte en clasificación de la batería de imágenes \textit{\textbf{imagenet}}, para clasificar las imágenes de nuestro problema.  Este problema, tiene 1000 clases correspondientes a diferentes objetos u animales y clasifica una foto en función a estas. A priori, podemos observar ya un problema y es que nuestro problema es muy técnico y limitado, las redes pre-entrenadas, en ningún caso habrán entrenado con algo ni siquiera parecido al dominio de nuestro problema por lo que esta vía queda descartada. 
+
+Igualmente, a modo de curiosidad se ha probado para ver que pasaría si intentamos clasificar nuestras imágenes con esta red. Hemos probado con cuatro imágenes distintas, para comprobar como las clasifica. Para ello siguiendo el tutorial anteriormente descrito, hemos pasado 6 imágenes con características distintas. 
+
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+
+  # Repeat with one of the images of the cervix dataset
+  im <- load.image("pruTescrop/Type_1/0.jpg")
+  normed <- preproc.image(im, mean.img)
+  prob <- predict(model, X = normed)
+  max.idx <- max.col(t(prob))
+  print(paste0("Predicted Top-class: ", synsets[[max.idx]]))
+
+  # Repeat with one of the images of the cervix dataset
+  im <- load.image("pruTescrop/Type_1/1168.jpg")
+  normed <- preproc.image(im, mean.img)
+  prob <- predict(model, X = normed)
+  max.idx <- max.col(t(prob))
+  print(paste0("Predicted Top-class: ", synsets[[max.idx]]))
+
+  # Repeat with one of the images of the cervix dataset
+  im <- load.image("pruTescrop/Type_2/64.jpg")
+  normed <- preproc.image(im, mean.img)
+  prob <- predict(model, X = normed)
+  max.idx <- max.col(t(prob))
+  print(paste0("Predicted Top-class: ", synsets[[max.idx]]))
+
+  # Repeat with one of the images of the cervix dataset
+  im <- load.image("pruTescrop/Type_2/913.jpg")
+  normed <- preproc.image(im, mean.img)
+  prob <- predict(model, X = normed)
+  max.idx <- max.col(t(prob))
+  print(paste0("Predicted Top-class: ", synsets[[max.idx]]))
+
+  # Repeat with one of the images of the cervix dataset
+  im <- load.image("pruTescrop/Type_3/71.jpg")
+  normed <- preproc.image(im, mean.img)
+  prob <- predict(model, X = normed)
+  max.idx <- max.col(t(prob))
+  print(paste0("Predicted Top-class: ", synsets[[max.idx]]))
+
+  # Repeat with one of the images of the cervix dataset
+  im <- load.image("pruTescrop/Type_3/1127.jpg")
+  normed <- preproc.image(im, mean.img)
+  prob <- predict(model, X = normed)
+  max.idx <- max.col(t(prob))
+  print(paste0("Predicted Top-class: ", synsets[[max.idx]]))
+
+\end{lstlisting}
+
+Los resultados a lo menos, son curiosos y podemos verlos en los pie de imagen de las siguientes figuras, donde se ilustra la clase asignada, y el tipo e imagen de nuestro problema. Algunos resultados son fáciles de comprender, como las que clasifica como \textit{granadas}, por otro lado, la imagen clasificada como un \textit{braco de Weimar} no guarda parecido ninguno.  
+
+\hfill \break
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo3/imagenes/0.jpg}
+		\caption{Type 1 imagen 0, clasificada como Weimaraner (perro).}
+	\label{1}
+\end{figure} 
+
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo3/imagenes/1168.jpg}
+		\caption{Type 1 imagen 1168, clasificada como Pomegranate (granada).}
+	\label{2}
+\end{figure} 
+
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo3/imagenes/64.jpg}
+		\caption{Type 2 imagen 64, clasificada como Pomegranate (granada).}
+	\label{3}
+\end{figure} 
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo3/imagenes/913.jpg}
+		\caption{Type 2 imagen 913, clasificada como bubble, (burbuja).}
+	\label{4}
+\end{figure} 
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo3/imagenes/1127.jpg}
+		\caption{Type 3 imagen 1127, clasificada como Pomegranate (granada).}
+	\label{5}
+\end{figure} 
+
+\begin{figure}[H]
+	\centering
+		\includegraphics[scale=0.4]{./Capitulo3/imagenes/71.jpg}
+		\caption{Type 3 imagen 71, clasificada como Meat Shop (carnicería).}
+	\label{6}
+\end{figure} 
 
 \section{Fine Tunning}
 

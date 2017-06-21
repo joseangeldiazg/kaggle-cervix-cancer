@@ -16,12 +16,13 @@
 \contentsline {section}{\numberline {3.1}Intel Deeplearning SDK}{17}{section.3.1}
 \contentsline {section}{\numberline {3.2}From Scratch}{18}{section.3.2}
 \contentsline {subsection}{\numberline {3.2.1}Mxnet}{18}{subsection.3.2.1}
-\contentsline {subsection}{\numberline {3.2.2}TensorFlow+Keras}{26}{subsection.3.2.2}
-\contentsline {section}{\numberline {3.3}Fine Tunning}{30}{section.3.3}
-\contentsline {chapter}{\numberline {4}Multiclasificaci\'on y mapas de caracter\IeC {\'\i }sticas}{31}{chapter.4}
-\contentsline {section}{\numberline {4.1}Multiclasificacion}{31}{section.4.1}
-\contentsline {section}{\numberline {4.2}Mapas de caracter\IeC {\'\i }sticas}{31}{section.4.2}
-\contentsline {chapter}{\numberline {5}Conclusiones y v\IeC {\'\i }as futuras}{32}{chapter.5}
-\contentsline {section}{\numberline {5.1}Conclusiones finales}{32}{section.5.1}
-\contentsline {section}{\numberline {5.2}V\IeC {\'\i }as futuras}{32}{section.5.2}
-\contentsline {chapter}{\numberline {6}ANEXO I}{33}{chapter.6}
+\contentsline {subsection}{\numberline {3.2.2}TensorFlow+Keras}{27}{subsection.3.2.2}
+\contentsline {section}{\numberline {3.3}Red ya entrenada}{30}{section.3.3}
+\contentsline {section}{\numberline {3.4}Fine Tunning}{33}{section.3.4}
+\contentsline {chapter}{\numberline {4}Multiclasificaci\'on y mapas de caracter\IeC {\'\i }sticas}{34}{chapter.4}
+\contentsline {section}{\numberline {4.1}Multiclasificacion}{34}{section.4.1}
+\contentsline {section}{\numberline {4.2}Mapas de caracter\IeC {\'\i }sticas}{34}{section.4.2}
+\contentsline {chapter}{\numberline {5}Conclusiones y v\IeC {\'\i }as futuras}{35}{chapter.5}
+\contentsline {section}{\numberline {5.1}Conclusiones finales}{35}{section.5.1}
+\contentsline {section}{\numberline {5.2}V\IeC {\'\i }as futuras}{35}{section.5.2}
+\contentsline {chapter}{\numberline {6}ANEXO I}{36}{chapter.6}
