@@ -599,6 +599,213 @@ Los resultados a lo menos, son curiosos y podemos verlos en los pie de imagen de
 
 \section{Fine Tunning}
 
+La técnica con la que mejor resultado hemos obtenido ha sido \textit{fine tuning}. Esta técnica, a modo de resumen, consiste en obtener una topología de red que esté en el estado del arte del reconocimiento de imágenes y adaptarla a nuestro problema, entrenando las últimas capas con las imágenes objetivo ya que de otro modo estaríamos en una situación parecida a la vista en el punto anterior. 
+
+Estudiando distintas topologías de red para nuestro problema, finalmente nos hemos decantado por usar la red \textit{\textbf{ResNet50}} \cite{resnet50}, la cual según la literatura ofrece grandes resultados en problemas de clasificación de imágenes. 
+
+Para adaptar la red a nuestro problema, hemos reducido las imágenes a 224x224 y añadidos dos capas a la salida, una capa \textit{Flatten} y una capa \textit{Fully Connected} de tamaño 3, una para cada una de las posibles clases de salida de nuestro problema la activación de esta capa es de tipo \textit{softmax}, necesaria cuando trabajamos con problemas de multiclasificación, ya que nos dará los resultados en forma de las probabilidades deseadas para nuestra función de log loss. 
+
+La primera aproximación al script podemos verla a continuación. Hemos suprimido los import y algunas lineas que se dan por explicadas. 
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+
+def im_multi(path):
+    try:
+        im_stats_im_ = Image.open(path)
+        return [path, {'size': im_stats_im_.size}]
+    except:
+        print(path)
+        return [path, {'size': [0,0]}]
+
+def im_stats(im_stats_df):
+    im_stats_d = {}
+    p = Pool(cpu_count())
+    ret = p.map(im_multi, im_stats_df['path'])
+    for i in range(len(ret)):
+        im_stats_d[ret[i][0]] = ret[i][1]
+    im_stats_df['size'] = im_stats_df['path'].map(lambda x: ' '.join(str(s) for s in im_stats_d[x]['size']))
+    return im_stats_df
+
+
+def get_im_cv2(path):
+    img = cv2.imread(path)
+    resized = cv2.resize(img, (64, 64), cv2.INTER_LINEAR)
+    return [path, resized]
+
+def normalize_image_features(paths):
+    imf_d = {}
+    p = Pool(cpu_count())
+    ret = p.map(get_im_cv2, paths)
+    for i in range(len(ret)):
+        imf_d[ret[i][0]] = ret[i][1]
+    ret = []
+    fdata = [imf_d[f] for f in paths]
+    fdata = np.array(fdata, dtype=np.uint8)
+    fdata = fdata.astype('float32')
+    fdata = fdata / 255
+    return fdata
+
+def main():
+    os.chdir('D:\Facultad\Master\Segundo cuatrimestre\SIGE\PracticaFinal')
+    test = glob.glob("pruebaTest/*.jpg")
+    test = pd.DataFrame([[p[11:len(p)],p] for p in test], columns = ['image','path'])
+    train= glob.glob("prueba1/**/*.png")+glob.glob("prueba2/**/*.jpg")
+    train = pd.DataFrame([[p[8:14],p[15:len(p)],p] for p in train], columns = ['type','image','path'])
+
+    train = im_stats(train)
+    train = train[train['size'] != '0 0'].reset_index(drop=True) #remove bad images
+    train_data = normalize_image_features(train['path'])
+
+    np.save('train.npy', train_data, allow_pickle=True, fix_imports=True)
+
+    print(len(train))
+
+    le = LabelEncoder()
+    train_target = le.fit_transform(train['type'].values)
+    print(le.classes_) #in case not 1 to 3 order
+    np.save('train_target.npy', train_target, allow_pickle=True, fix_imports=True)
+    test_data = normalize_image_features(test['path'])
+
+    np.save('test.npy', test_data, allow_pickle=True, fix_imports=True)
+
+    test_id = test.image.values
+    np.save('test_id.npy', test_id, allow_pickle=True, fix_imports=True)
+
+    x_train,x_val_train,y_train,y_val_train = train_test_split(train_data,train_target,test_size=0.25, random_state=17)
+
+
+    datagen = ImageDataGenerator(rotation_range=0.3, zoom_range=0.3)
+
+    datagen.fit(train_data)
+
+    base_model = ResNet50(weights='imagenet', include_top=False)
+
+    x = Flatten()(base_model.output)
+    output = Dense(3, activation='softmax')(x)
+
+    model = Model(inputs=base_model.input, outputs=output)
+
+    # train only the top layers
+    for layer in base_model.layers:
+        layer.trainable = False
+
+    # compile the model
+    model.compile(optimizer='adamax', loss='sparse_categorical_crossentropy')
+    model.summary()
+
+    print('Training...')
+    model.fit_generator(generator=datagen.flow(x_train, y_train,
+                        batch_size=15, shuffle=True),
+                        validation_data=(x_val_train, y_val_train),
+                        verbose=1, epochs=35, samples_per_epoch=len(x_train))
+
+    print('Predicting...')
+    pred = model.predict(test_data)
+
+    df = pd.DataFrame(pred, columns=['Type_1','Type_2','Type_3'])
+    df['image_name'] = test_id
+    df.to_csv('submission.csv', index=False)
+
+if __name__ == '__main__':
+    #freeze_support() # Optional under circumstances described in docs
+    main()
+
+\end{lstlisting}
+
+Este script, ofrecía resultados muy buenos en training claramente, estaba sobreaprendiendo ya que al subir los resultados a Kaggle, este nos ofrecía valores muy malos en la competición.  Igualmente, al añadir en datagen, un mayor número de modificaciones y hacer varias pruebas variando el conjunto de entrenamiento (mas o menos imágenes) y variando en número de épocas de entrenamiento, conseguimos obtener el mejor resultado con un valor de log loss en test de 0.85. 
+
+En este punto, concluimos que el problema de estas redes y cuya solución podría darnos una ventaja en la competición vendría dado por los siguientes puntos:
+
+\begin{itemize}
+	\item Por un lado, los requisitos de memoria. Al intentar cargar todo el conjunto de training, para entrenar con imágenes extra incluidas la memoria desbordaba y aquí poca solución había posible sin perder mucha resolución por lo cual reducimos el dataset al original+transformaciones.   
+	\item Por otro lado, tenemos el problema del sobreentrenamiento. Aquí podemos usar varias técnicas como validación cruzada o algo muy extendido en deep learning, el \textbf{early stopping}, que aunque no es una solución para el sobreentrenamiento como tal puede ayudar a prevenirlo en cierta medida. Esta ha sido la solución por el cual nos decantamos. 
+\end{itemize}
+
+Para implementar early stopping con Tensorflow+Keras hemos procedido de la siguiente manera. Por un lado, tal y como podemos ver en el siguiente script, guardamos el modelo en json  y creamos un checkpoint con el log loss de validación. Este, guardará un archivo hdf5 cada vez que se mejore el log\_loss. 
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+base_model = ResNet50(weights='imagenet', include_top=False)
+
+     # add a global spatial average pooling layer
+    x = GlobalAveragePooling2D()(base_model.output)
+    # add a fully-connected layer
+    x = Dense(512, activation='relu')(x)
+    # add a logistic layer
+    output = Dense(3, activation='softmax')(x)
+
+    for layer in base_model.layers:
+        layer.trainable = False
+
+    model = Model(inputs=base_model.input, outputs=output)
+
+    for layer in base_model.layers:
+        layer.trainable = False
+
+    model.compile(optimizer='adamax', loss='sparse_categorical_crossentropy')
+    model.summary()
+    model_json = model.to_json()
+
+    experimento_path="/Experimentos/Fine"
+
+    if not os.path.exists(experimento_path):
+		os.makedirs(experimento_path)
+
+	with open(experiment_name + "/" + "model.json","w") as json_file:
+		json_file.write(model_json)
+
+    print("Entrenando...")
+
+    filepath= + "/checkpoint-val_loss{val_loss:.5f}.hdf5"
+    checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='max')
+    callbacks_list = [checkpoint]
+
+    model.fit_generator(generator=datagen.flow(x_train, y_train,
+                        batch_size=5, shuffle=True),
+                        validation_data=(x_val_train, y_val_train),
+                        verbose=1, epochs=35, steps_per_epoch=len(x_train), callbacks=callbacks_list)
+
+\end{lstlisting}
+
+Una vez guardados estos archivos hdf5 con resultados a priori buenos, usaremos el siguiente script que carga el modelo en json, carga los pesos de ese modelo y valida nuestro conjunto de test. 
+
+\lstset{language=R, breaklines=true, basicstyle=\footnotesize}
+\lstset{numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=-2pt}
+\begin{lstlisting}
+
+    test = glob.glob("pruebaTest/*.jpg")
+    test = pd.DataFrame([[p[11:len(p)],p] for p in test], columns = ['image','path'])
+    test_data = normalize_image_features(test['path'])
+    np.save('test.npy', test_data, allow_pickle=True, fix_imports=True)
+    test_id = test.image.values
+    np.save('test_id.npy', test_id, allow_pickle=True, fix_imports=True)
+
+    experiment_name = "Experimentos/fine"
+
+    json_file = open(experiment_name + '/model.json', 'r')
+    model_json = json_file.read()
+    json_file.close()
+
+    model = model_from_json(model_json)
+
+    model.load_weights(experiment_name + "/CAMBIARMANUALMENTEPORELMEJOR")
+
+    pred = model.predict(test_data)
+
+    df = pd.DataFrame(pred, columns=['Type_1','Type_2','Type_3'])
+    df['image_name'] = test_id
+    df.to_csv('submission.csv', index=False)
+
+\end{lstlisting}
+
+Esta aproximación es muy potente ya que permite dejar la máquina en computo durante largas épocas sin miedo de perder buenas soluciones ya que cuando estas mejoren se guardarán los pesos de la red y podremos comprobar como funcionan en Kaggle. 
+
+Pese a que la aproximación es buena, no conseguimos mejorar el resultado de la anterior aproximación y por falta de tiempo, no pudimos afinar esta. 
+
+En este punto finalizamos la explicación del proceso de entrenamiento y la competición como tal, ya que en el punto siguiente veremos a modo teórico a aproximaciones de multiclasificación como \textit{OvO} o \textit{OvA}. 
 
 \pagebreak
 \clearpage
