@@ -7,11 +7,89 @@
 \chapter{Multiclasificación y mapas de características}
 \label{multi}
 
-\section{Multiclasificacion}
+En este capítulo estudiaremos teóricamente técnicas de multiclasificación y el uso de otro tipo de clasificadores en nuestro problema.  
+
+\section{Multiclasificación}
+
+El problema frente al que nos encontramos, es un problema en el que una imagen a clasificar puede pertenecer a tres clases distintas, es decir, estamos ante un problema multiclase. Algunos clasificadores muy potentes, como es el caso de SVM, no pueden trabajar de manera apropiada con estos problemas ya que ofrecen su máxima potencia en problemas binarios, mismo problema que encontramos con algunos métodos de evaluación como el AUC \cite{auc} en los que es necesario disponer de una manera de traspasar el problema a un dominio binario que permita estas evaluaciones o el uso de estos algoritmos. El uso fundamental de estás técnicas es el siguiente:
+
+\begin{itemize}
+	\item Descomponer un problema multi-clase en problemas binarios.
+	\item Aprender un clasificador para cada subproblema.
+	\item Agregación de las salidas en un solo clasificador.
+\end{itemize}
+
+En la literatura \cite{mc3} se estudian distintos enfoques a estos problemas cada vez más exhaustivamente dado su interés en el ámbito de la investigación dentro de la ciencia de datos. En esta sección estudiaremos algunos de estos enfoques. 
+
+\subsection{One vs One}
+
+Es el enfoque más sencillo de estudiar. En este, se entrenan clasificadores acotando el problema a solo dos clases e iterando de manera que se generan clasificadores para cada una de las posibles combinaciones de clases. Con las salidas de estos clasificadores se genera una matriz de votos que se normalizará y agregará para obtener la salida final. En esta aproximación, algunos de los métodos de agregación más extendidos que pueden usarse son:
+
+\begin{itemize}
+	\item \textbf{Voto mayoritario}: La clase ganadora es aquella que haya tenido un mayor número de respuesta positivas.
+	\item \textbf{Voto Ponderado}: La clase ganadora es aquella cuya suma de respuestas sea la de mayor magnitud.
+	\item  \textbf{Grafo acíclico dirigido de decisión}: Se crea un árbol binario de decisión donde cada nodo representa la respuesta de un clasificador. De esta manera, cuando una clase es predicha, otra clase es descartada, por lo que es necesario descartar la pertenencia a C-1 clases. La clase ganadora es aquella con la respuesta positiva en el último nodo. En los nodos superiores se colocan los clasificadores que produzcan una mayor separación entre clases, aunque no hay una evidencia sustancial de que el ordenamiento de los nodos con alguna preferencia mejore la clasificación. 
+\end{itemize}
+
+\subsection{One vs All}
+
+En esta aproximación, se enfrenta una clase frente a todas las demás. Es decir, la clase en cuestión se toma como positiva y todas las demás pasan a ser negativas. Una vez hecho esto, se entrenan clasificadores para cada caso y tras ello, al igual que en la aproximación \textit{OvO} se agregan los resultados. 
+
+Este tipo de aproximaciones tiene una clara y obvia desventaja y es que los problemas tienen que lidiar con un alto ratio de desbalanceo entre clases, lo que hace que se actualmente se estudien en conjunción a  técnicas de oversampling o undersampling. 
+
+Algunas técnicas de agregacion en este punto son las siguientes:
+
+\begin{itemize}
+	\item \textbf{Voto mayoritario}: Similar a \textit{OvO}.
+	\item \textbf{Uno contra todos ordenados dinámicamente}: Además de los clasificadores OvA, se entrena un clasificador multiclase \textbf{Näive Bayes} que ayuda a la ordenación. 
+	\item  \textbf{Estrategia A\&O}:  Combinación de técnicas OvO y OvA. 
+\end{itemize}
+
+\subsection{OvO vs OvA}
+
+Ventajas OVO:
+
+\begin{itemize}
+	\item Problemas más sencillos.
+	\item Problemas más pequeños.
+	\item Computacionalmente más rápido.
+	\item Generalmente, más preciso.
+\end{itemize}
+
+Desventajas OVO:
+
+\begin{itemize}
+	\item Región no clasificable.
+	\item Clasificadores no competentes.
+	\item Crecimiento cuadrático en el número de clasificadores.
+\end{itemize}
+
+Ventajas OVA:
+
+\begin{itemize}
+	\item Utiliza todos los ejemplos.
+	\item No hay clasificadores no competentes.
+	\item Agregaciones más simples
+	\item Crecimiento lineal en el número de clasificadores.
+\end{itemize}
+
+Desventajas OVA:
+
+\begin{itemize}
+	\item Problemas no balanceados..
+	\item Problemas más complejos.
+	\item Computacionalmente más costosos.
+\end{itemize}
+
 
 
 \section{Mapas de características}
 
+Una de las últimas vías de investigación con redes neuronales pasa por utilizar las redes para obtener los mapas de características de una imagen y utilizar otros clasificadores distintos de redes neuronales para clasificar estos. Esta via, es muy avanzada y hemos entrado a modo teórico probando el script dado en prácticas en el cual se usa un RandomForest para este objetivo. 
+
+Tras probarlo, los resultados son muy malos, debido a que RandomForest no trabaja bien con este tipo de datos sino que necesita datos categóricos. Por ello, el uso de XGBOOST (estado del arte) el cual utiliza datos reales para su entrenamiento ofrecería grandes resultados en esta forma de atacar el problema. 
+
+Otro clasificador interesante, podría ser las máquinas de soporte vectorial, junto con las cuales y Xgboost podríamos desarrollar un ensemble que podría obtener muy buenos resultados, al menos teóricamente. 
 
 \pagebreak
 \clearpage
